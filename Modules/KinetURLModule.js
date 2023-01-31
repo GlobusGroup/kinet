@@ -18,11 +18,11 @@ class KinetURLModule {
 
     this.kinet.registerCallable(() => {
       this.active = false
-    }, 'kinetURLModule.disableURLUpdate')
+    }, 'KinetURLModule.disableURLUpdate')
 
     this.kinet.registerCallable(() => {
       this.active = true
-    }, 'kinetURLModule.enableURLUpdate')
+    }, 'KinetURLModule.enableURLUpdate')
 
 
   }
@@ -58,7 +58,7 @@ class KinetURLModule {
   handleStateChange(setBy) {
     //if the state change was triggered by the URL module, don't do anything
     //to prevent an infinite loop
-    if (setBy == 'kinetURLModule') return
+    if (setBy == 'KinetURLModule') return
     if (!this.active) return
 
     let url
