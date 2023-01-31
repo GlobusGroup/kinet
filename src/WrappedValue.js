@@ -1,5 +1,6 @@
 import Dep from './Dep'
 
+// WrappedValue is a class that wraps a value and makes it reactive.
 class WrappedValue {
 	constructor(value, kinetInsance, path) {
 		this.dep = new Dep()
@@ -17,11 +18,12 @@ class WrappedValue {
 		})
 	}
 
+	// The `overrideSetters` method sets up overrides for methods on arrays such as `push`, `pop`, `splice`, `shift`, and `unshift`.
+	// These overrides call the original method, then call `this.dep.notify` with `value` as the parameter.
 	overrideSetters() {
 		var value = this.value
 		var self = this
 
-		//override the various methods on the object so that we can notify the dependents
 		if (typeof value === 'object' || Array.isArray(value)) {
 			const arrayMethods = ['push', 'pop', 'splice', 'shift', 'unshift']
 			arrayMethods.forEach((method) => {
@@ -36,11 +38,12 @@ class WrappedValue {
 		}
 	}
 
+	// The `get` method simply returns `this.value`.
 	get() {
 		return this.value
 	}
+	// The `set` method sets `this.value` to the newValue parameter, then calls `this.dep.notify` with `newValue` as the parameter.
 	set(newValue) {
-		//update the value and notify the dependents
 		this.value = newValue
 		this.dep.notify(newValue)
 	}
