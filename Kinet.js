@@ -58,7 +58,7 @@ class Kinet {
 					func.deep = true
 
 					Object.keys(this.values[observable].value).forEach((key) => {
-						var path = ('path', observable + '.' + key)
+						var path = observable + '.' + key
 						if (
 							//if it's an object
 							typeof this.values[path].value === 'object' ||
@@ -82,11 +82,6 @@ class Kinet {
 		// Define the `getByPath` method on the data object.
 		Object.defineProperty(data, 'getByPath', {
 			value: (path) => {
-				if(typeof this.values[path].value == 'function') {
-					return {
-						value: this.values[path].value(this.data),
-					}
-				}
 				return this.values[path]
 			},
 		})
@@ -94,11 +89,10 @@ class Kinet {
 		// Define the `setByPath` method on the data object.
 		Object.defineProperty(data, 'setByPath', {
 			value: (path, value, setBy) => {
-				return this.values[path].set(value, setBy)
+				let newval = this.values[path].set(value, setBy)
+				return newval
 			},
 		})
-
-		return this.makeReactive(data)
 	}
 
 	// `makeReactive` is a recursive function that walks down the data object and creates WrappedValues
@@ -126,7 +120,6 @@ class Kinet {
 				},
 			})
 		})
-		this.data = data
 
 		return data
 	}
