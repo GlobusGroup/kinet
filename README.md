@@ -1,71 +1,71 @@
-# Kinet
+# Kinet Reactivity Engine
 
-A reactive data object library for JavaScript.
+Kinet is a lightweight reactivity engine for javascript. It is designed to be used without the need of any framework, but it can be used with any framework if desired.
+
+Kinet uses a modular approach, which means that you can use only the parts you need.
+
+# Kinet is still in development and not ready for production use
 
 ## Installation
 
 ```bash
-npm install -s  globusgroup/kinet
+npm install kinet
 ```
 
 ## Usage
 
-```js
-import Kinet from 'kinet';
-
-const data = {
-  name: 'John Doe',
-  age: 30
-};
-
-const reactiveData = new Kinet(data);
-
+```javascript
+import { Kinet } from "kinet";
 ```
 
-## Methods
+### Create a new state object
+```javascript
+const state = new Kinet({
+  foo: "bar",
+  baz: { qux: 'quux' }
+});
+```
 
-
-### subscribe(observable, func, deep)
-
-Subscribe to changes to a value in the reactive data object.
-
-- `observable`: the dot-notated path to the value you want to subscribe to.
-- `func`: the function you want to be triggered when the value changes.
-- `deep`: a boolean indicating whether to subscribe to all values within the object (default: false).
-
-### getByPath(path)
-
-Return the reactive version of the value at a specified path.
-
-- `path`: the dot-notated path to the value you want to get.
-
-### setByPath(path, value)
-
-Set a new value at a specified path.
-
-- `path`: the dot-notated path to the value you want to set.
-- `value`: the new value to set.
-
-## Example
-
-
-```js
-import Kinet from 'kinet';
-
-const data = {
-  name: 'John Doe',
-  age: 30
-};
-
-const reactiveData = new Kinet(data);
-
-reactiveData.subscribe('name', () => {
-  console.log(`Name changed to ${reactiveData.getByPath('name')}`);
+### subscribe to changes
+```javascript
+state.subscribe('foo', (newValue, oldValue) => {
+  console.log('foo changed from', oldValue, 'to', newValue);
 });
 
-reactiveData.setByPath('name', 'Jane Doe');
-// Name changed to Jane Doe
+//use dot notation to subscribe to nested properties
+state.subscribe('baz.qux', (newValue, oldValue) => {
+  console.log('baz.qux changed from', oldValue, 'to', newValue);
+});
 
+//use `deep` to subscribe to all changes in a nested object
+state.subscribe('baz',(newValue, oldValue) => {
+  console.log('baz changed from', oldValue, 'to', newValue);
+}, true);
+```
+
+### Get and set values
+#### Dot notation directly on the state object
+```javascript
+//get value
+const valueOfBazQux = state.baz.qux;
+//set value
+state.foo = 'bar2';
+```
+
+#### Use the `byPath` method
+```javascript
+//get value
+const valueOfBazQux = state.byPath('baz.qux');
+//set value
+state.byPath('baz.qux', 'quux2');
+```
+#### More explicit methods
+`getByPath(path)` and `setByPath(path, value)` are more explicit versions of `byPath(path, value)`. The byPath method is a shorthand for these two methods.
+```javascript
+//get value
+state.getByPath('baz.qux');
+//set value
+state.setByPath('baz.qux', 'quux2');
 ```
 
 ## Development
