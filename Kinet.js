@@ -82,6 +82,11 @@ class Kinet {
 		// Define the `getByPath` method on the data object.
 		Object.defineProperty(data, 'getByPath', {
 			value: (path) => {
+				if (typeof this.values[path].value == 'function') {
+					return {
+						value: this.values[path].value(this.data),
+					}
+				}
 				return this.values[path]
 			},
 		})
@@ -95,19 +100,18 @@ class Kinet {
 		})
 	}
 
-	// `makeReactive` is a recursive function that walks down the data object and creates WrappedValues
-	// for each value it finds. WrappedValues are reactive versions of the original value and possess a
-	// `depend` method via the Dep class.
+	// makeReactive is a recursive function that walks down the data object and creates wrappedValues
+	// for each value it finds
+	// wrappedValues are reactive versions of the original value and possess a depend method via the Dep class
 	makeReactive = (data, vpath) => {
 		let path = vpath
 		Object.keys(data).forEach((key) => {
 			let currentPath = path ? path + '.' + key : key
 			let underlyingValue
-
 			if (data[key] !== null) {
 				underlyingValue = new WrappedValue(data[key], this, currentPath)
 			} else {
-				underlyingValue = new WrappedValue('', this, currentPath)
+				underlyingValue = new WrappedValue({}, this, currentPath)
 			}
 			this.values[currentPath] = underlyingValue
 
@@ -120,7 +124,7 @@ class Kinet {
 				},
 			})
 		})
-
+		this.data = data
 		return data
 	}
 
