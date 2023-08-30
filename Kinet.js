@@ -82,12 +82,17 @@ class Kinet {
 		// Define the `getByPath` method on the data object.
 		Object.defineProperty(data, 'getByPath', {
 			value: (path) => {
-				if (typeof this.values[path].value == 'function') {
-					return {
-						value: this.values[path].value(this.data),
+				try {
+					if (typeof this.values[path].value == 'function') {
+						return {
+							value: this.values[path].value(this.data),
+						}
 					}
+					return this.values[path]
+				} catch (error) {
+					console.log('path not found', path)
+					console.error(error)
 				}
-				return this.values[path]
 			},
 		})
 
