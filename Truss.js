@@ -2,8 +2,8 @@ const beforeAnimationStart = new Event('beforeAnimationStart')
 const afterAnimationEnd = new Event('afterAnimationEnd')
 
 class Truss {
-	constructor(state, ObservableNode) {
-		this._init(state, ObservableNode)
+	constructor(state, ObservableNode, scope) {
+		this._init(state, ObservableNode, scope ? scope : document)
 	}
 
 	/**
@@ -14,12 +14,12 @@ class Truss {
 	 * @param {object} state - The Kinet compatible state object.
 	 * @returns {void}
 	 */
-	_init(state, ObservableNode) {
+	_init(state, ObservableNode, scopedElement) {
 		this.state = state
-		var matchedElements = document.querySelectorAll('[truss-bind]')
+		var matchedElements = scopedElement.querySelectorAll('[truss-bind]')
 		matchedElements.forEach((element) => this.watchElement(element))
 		//get elelents with the tag name truss-bind for one way binding
-		var oneWayBindElements = document.querySelectorAll('truss-bind')
+		var oneWayBindElements = scopedElement.querySelectorAll('truss-bind')
 		oneWayBindElements.forEach((element) => this.oneWayBind(element))
 
 		if (ObservableNode !== undefined) {
