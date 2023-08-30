@@ -2,8 +2,8 @@ const beforeAnimationStart = new Event('beforeAnimationStart')
 const afterAnimationEnd = new Event('afterAnimationEnd')
 
 class Truss {
-	constructor(state) {
-		this._init(state)
+	constructor(state, ObservableNode) {
+		this._init(state, ObservableNode)
 	}
 
 	/**
@@ -14,13 +14,30 @@ class Truss {
 	 * @param {object} state - The Kinet compatible state object.
 	 * @returns {void}
 	 */
-	_init(state) {
+	_init(state, ObservableNode) {
 		this.state = state
 		var matchedElements = document.querySelectorAll('[truss-bind]')
 		matchedElements.forEach((element) => this.watchElement(element))
 		//get elelents with the tag name truss-bind for one way binding
 		var oneWayBindElements = document.querySelectorAll('truss-bind')
 		oneWayBindElements.forEach((element) => this.oneWayBind(element))
+
+		if (ObservableNode !== undefined) {
+			// user MutationObserver to watch for new elements
+			new MutationObserver((mutations) => {
+				mutations.forEach((mutation) => {
+					mutation.addedNodes.forEach((node) => {
+						if (node.nodeType === 1) {
+							var matchedElements = node.querySelectorAll('[truss-bind]')
+							matchedElements.forEach((element) => this.watchElement(element))
+						}
+					})
+				})
+			}).observe(ObservableNode, {
+				childList: true,
+				subtree: true,
+			})
+		}
 	}
 
 	/**
@@ -44,7 +61,7 @@ class Truss {
 		const animationDuration = element.getAttribute('animation-duration')
 		//if the duration isn't specified, then we can just set it to 200
 		const duration = animationDuration ? animationDuration : 200
-		
+
 
 		//if we don't have a path, then we can't bind the element
 		if (!path) {
@@ -143,7 +160,7 @@ class Truss {
 		let eventTarget
 		//if the element is a checkbox or radio, then we need to listen for the change event
 		//otherwise, we can listen for the input event
-		const altBehaviour = element.type == 'checkbox' || element.type == 'radio'
+		const altBehaviour = element.type == 'checkbox' || element.type == 'radio' || element.type == 'select-one'
 		if (altBehaviour) {
 			eventTarget = 'change'
 		} else {
@@ -163,34 +180,42 @@ class Truss {
 		})
 
 		//set the value in the element to the value in the state
+
 		if (!altBehaviour) {
 			element.value = state.getByPath(path).value
-		} 
+		}
 		if (altBehaviour) {
 			// if it's a checkbox or a radio, let's check if the value is true
 			element.checked = state.getByPath(path).value === true
 		}
 
 		state.subscribe(element.getAttribute('truss-bind'), (value) => {
-			if (!altBehaviour) {
-				element.value = value
-			} else {
-				// if the value is an array (eg[Red, Blue, Black]), then we need to loop
-				// through the array and check if the value is in the array
-				// if it is, then we can check the checkbox
-				if (Array.isArray(value)) {
-					if (value.includes(element.value)) {
-						element.checked = true
-						return
-					}
+			this.reactToStateChange(element, path, value, altBehaviour, eventTarget)
+		})
+		let value = state.getByPath(path).value
+		this.reactToStateChange(element, path, value, altBehaviour, eventTarget)
+	}
+
+	reactToStateChange(element, path, value, altBehaviour, eventTarget) {
+		if (!altBehaviour) {
+			element.value = value
+		} else {
+			// if the value is an array (eg[Red, Blue, Black]), then we need to loop
+			// through the array and check if the value is in the array
+			// if it is, then we can check the checkbox
+			if (Array.isArray(value)) {
+				if (value.includes(element.value)) {
+					element.checked = true
+					return
+				} else {
 					element.checked = false
 					return
 				}
-				if (state.getByPath(path).value == element.value) {
-					element.checked = true
-				}
 			}
-		})
+			if (this.state.getByPath(path).value == true) {
+				element.checked = true
+			}
+		}
 	}
 
 	/**
