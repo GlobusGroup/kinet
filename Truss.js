@@ -268,7 +268,7 @@ class Truss {
 			default:
 				// console.log('working in normal mode')
 				//if the value is neither an array or an object, then we can just set the value
-				this.state.getByPath(path).value = value
+				this.state.setByPath(path, value)
 				break
 		}
 	}
