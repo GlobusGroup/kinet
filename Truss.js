@@ -101,7 +101,7 @@ class Truss {
 				)
 			} else {
 				//if the animate attribute is not present, then we can just set the value
-				element.innerHTML = value.toFixed(dp)
+				element.innerHTML = isNumeric(value) ? value.toFixed(dp) : value;
 			}
 		})
 
@@ -272,6 +272,14 @@ class Truss {
 				break
 		}
 	}
+}
+
+function isNumeric(n) {
+	if (typeof n == 'number') return true
+	//check if n.replace is a function
+	if (n.replace == undefined) return false
+	n = n.replace(/\s/g, '_')
+	return !isNaN(parseFloat(n)) && isFinite(n)
 }
 
 export default Truss
