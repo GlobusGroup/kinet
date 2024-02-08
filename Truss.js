@@ -275,8 +275,8 @@ class Truss {
 }
 
 function isNumeric(n) {
-	if (typeof n == undefined) return false
-	if (typeof n == null) return false
+	if (n == undefined) return false
+	if (n == null) return false
 	if (typeof n == 'number') return true
 	//check if n.replace is a function
 	if (n.replace == undefined) return false
