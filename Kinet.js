@@ -13,6 +13,7 @@ class Kinet {
 		this.data = data
 		this.callables = {}
 		this.state = {}
+		this.valuesWithUnmetDependencies = []
 
 		this.options = new KinetOptionsObject(options)
 		//values is a map of all the values in the object that enables
@@ -29,6 +30,7 @@ class Kinet {
 		if (this.options.modules.length > 0) {
 			this.loadModules()
 		}
+
 		return this
 	}
 
@@ -79,8 +81,52 @@ class Kinet {
 			},
 		})
 
+		Object.defineProperty(this, 'subscribe', {
+			value: (observable, func, deep) => {
+				if (deep) {
+					//if deep is true we will walk down the object and subscribe to all the values we find
+					func.deep = true
+
+					Object.keys(this.values[observable].value).forEach((key) => {
+						var path = observable + '.' + key
+						if (
+							//if it's an object
+							typeof this.values[path].value === 'object' ||
+							//or an array
+							Array.isArray(this.values[path].value)
+						) {
+							//recurse this function over it
+							data.subscribe(path, func, true)
+						} else {
+							//otherwise attach the dependency
+							this.values[path].dep.depend(func)
+						}
+					})
+				}
+				this.values[observable].dep.depend(func)
+				// Return the original callback function so that it can be called right away if required.
+				return func
+			},
+		})
+
 		// Define the `getByPath` method on the data object.
 		Object.defineProperty(data, 'getByPath', {
+			value: (path) => {
+				try {
+					if (typeof this.values[path].value == 'function') {
+						return {
+							value: this.values[path].value(this.data),
+						}
+					}
+					return this.values[path]
+				} catch (error) {
+					console.log('path not found', path)
+					console.error(error)
+				}
+			},
+		})
+
+		Object.defineProperty(this, 'getByPath', {
 			value: (path) => {
 				try {
 					if (typeof this.values[path].value == 'function') {
@@ -103,6 +149,15 @@ class Kinet {
 				return newval
 			},
 		})
+
+		Object.defineProperty(this, 'setByPath', {
+			value: (path, value, setBy) => {
+				let newval = this.values[path].set(value, setBy)
+				return newval
+			},
+		})
+
+
 	}
 
 	// makeReactive is a recursive function that walks down the data object and creates wrappedValues

@@ -3,6 +3,7 @@ import Dep from './Dep'
 // WrappedValue is a class that wraps a value and makes it reactive.
 class WrappedValue {
 	constructor(value, kinetInsance, path) {
+		const self = this
 		this.dep = new Dep(kinetInsance)
 		this.kinet = kinetInsance
 		if (typeof value === 'object' || Array.isArray(value)) {
@@ -13,10 +14,10 @@ class WrappedValue {
 		}
 		Object.defineProperty(this, 'forceUpdate', {
 			value: function () {
-				if (typeof this.value == 'function') {
-					this.dep.notify(this.value(this.kinet.data))
+				if (typeof self.value == 'function') {
+					self.dep.notify(self.value(self.kinet.data))
 				} else {
-					this.dep.notify(this.value)
+					self.dep.notify(self.value)
 				}
 			},
 		})
@@ -28,9 +29,7 @@ class WrappedValue {
 				const value = this.kinet.values[path]
 
 				if (value) {
-					value.dep.depend(() => {
-						this.forceUpdate()
-					})
+					this.kinet.subscribe(path, this.forceUpdate, true)
 				}
 			})
 		}
@@ -95,7 +94,6 @@ class WrappedValue {
 			this.value = this.kinet.makeReactive(newValue, this.path)
 			//re-attach the subscribers to the new object
 			subscribers.forEach((sub) => {
-				console.log('sub', sub)
 				if (sub.deep) {
 					this.kinet.data.subscribe(this.path, sub, true)
 				} else {

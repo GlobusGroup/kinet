@@ -16,6 +16,15 @@ class Truss {
 	 */
 	_init(state, ObservableNode, scopedElement) {
 		this.state = state
+
+		if (scopedElement == undefined || scopedElement == null || scopedElement == document) {
+      scopedElement = document.body
+    }
+
+
+		this.convertCurlyBraces(scopedElement)
+    this.handleLoops(scopedElement)
+
 		var matchedElements = scopedElement.querySelectorAll('[truss-bind]')
 		matchedElements.forEach((element) => this.watchElement(element))
 		//get elelents with the tag name truss-bind for one way binding
@@ -39,6 +48,84 @@ class Truss {
 			})
 		}
 	}
+
+	handleLoops(scopedElement) {
+    const loopElements = scopedElement.querySelectorAll('truss-loop')
+    loopElements.forEach((element) => {
+      const loop = element.getAttribute('loop');
+      if (loop !== null) {
+        const loopParts = loop.split(' in ');
+        const itemName = loopParts[0];
+        const arrayName = loopParts[1];
+        const array = this.state.getByPath(arrayName).value;
+        const itemTemplate = element.innerHTML;
+        element.innerHTML = '';
+
+        array.forEach((_item, index) => {
+          const itemElement = document.createElement('truss-item');
+          itemElement.setAttribute('loop-index', index.toString());
+          itemElement.innerHTML = itemTemplate;
+          element.appendChild(itemElement);
+        });
+
+        const trussItemElements = element.querySelectorAll('truss-item');
+        trussItemElements.forEach((element) => {
+
+          const index = parseInt(element.getAttribute('loop-index'));
+          const trussBindElements = element.querySelectorAll('truss-bind');
+          trussBindElements.forEach((element) => {
+            const path = element.getAttribute('to');
+            if (path !== null) {
+              element.setAttribute('to', path.replace(itemName, arrayName + `.${index}`));
+            }
+          });
+
+          //now the same for anything with a truss-bind attribute
+          const twoWayBindElements = element.querySelectorAll('[truss-bind]');
+          twoWayBindElements.forEach((element) => {
+            const path = element.getAttribute('truss-bind');
+            if (path !== null) {
+              element.setAttribute('truss-bind', path.replace(itemName, arrayName + `.${index}`));
+            }
+          });
+
+          //wipe away the truss-loop element
+          const replacementHTML = element.innerHTML
+          element.outerHTML = replacementHTML
+
+        });
+
+        //wipe away the truss-loop element
+        const replacementHTML = element.innerHTML
+        element.outerHTML = replacementHTML
+
+      }
+    });
+  }
+
+  convertCurlyBraces(scopedElement) {
+    const regex = /{{\s*([^\s]+)\s*}}/g
+    const matches = scopedElement.innerHTML.match(regex)
+    if (matches) {
+
+      matches.forEach((match) => {
+
+        const path = match.replace(/{{\s*([^\s]+)\s*}}/, '$1')
+        scopedElement.innerHTML = scopedElement.innerHTML.replace(
+          match,
+          `<truss-bind to="${path}"></truss-bind>`,
+        )
+      })
+    }
+  }
+
+  turnMatchIntoFunction(match) {
+    //remove the curly braces
+    match = match.replace(/{{\s*/, '')
+    match = match.replace(/\s*}}/, '')
+
+    return `(data) => ${match}`
+  }
 
 	/**
 	 * Binds an HTML element to a state property in a one-way binding: state -> element.
@@ -91,7 +178,7 @@ class Truss {
 
 						//set the innerHTML of the element to the current value
 						//toFixed(2) rounds the number to 2 decimal places
-						element.innerHTML = current.toFixed(dp)
+						element.innerHTML = this.getAbsoluteValue(current, dp)
 
 						//if the animation is done, then emit the afterAnimationEnd event
 						if (done) {
@@ -101,13 +188,27 @@ class Truss {
 				)
 			} else {
 				//if the animate attribute is not present, then we can just set the value
-				element.innerHTML = isNumeric(value) ? value.toFixed(dp) : value;
+				element.innerHTML = this.getAbsoluteValue(value, dp)
 			}
 		})
 
 		//initially set the value of the element to the value in the state
 		element.innerHTML = this.state.getByPath(path).value
 	}
+
+
+	getAbsoluteValue(value, decimalPlaces) {
+    if (isNumeric(value)) {
+      if (decimalPlaces) {
+        return parseFloat(value).toFixed(decimalPlaces)
+      } else {
+        return parseFloat(value)
+      }
+    }
+    else {
+      return value
+    }
+  }
 
 	/**
 	 * "Animates" between two numbers.
