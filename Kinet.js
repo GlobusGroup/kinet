@@ -55,7 +55,7 @@ class Kinet {
 		//subscribe method
 		Object.defineProperty(data, 'subscribe', {
 			value: (observable, func, deep) => {
-				if (deep) {
+				if (deep && isObjectOrArray(this.values[observable].value)) {
 					//if deep is true we will walk down the object and subscribe to all the values we find
 					func.deep = true
 
@@ -83,12 +83,16 @@ class Kinet {
 
 		Object.defineProperty(this, 'subscribe', {
 			value: (observable, func, deep) => {
-				if (deep) {
+				if (deep && isObjectOrArray(this.values[observable].value)) {
 					//if deep is true we will walk down the object and subscribe to all the values we find
 					func.deep = true
 
 					Object.keys(this.values[observable].value).forEach((key) => {
+
 						var path = observable + '.' + key
+						// if(!this.values[path]) {
+						// 	return
+						// }
 						if (
 							//if it's an object
 							typeof this.values[path].value === 'object' ||
@@ -197,6 +201,10 @@ class Kinet {
 	amendState(givenState, path, setBy) {
 		this.data.setByPath(path, givenState, setBy)
 	}
+}
+
+function isObjectOrArray(obj) {
+	return typeof obj === 'object' || Array.isArray(obj)
 }
 
 export default Kinet
