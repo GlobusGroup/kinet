@@ -193,7 +193,7 @@ class Truss {
 		})
 
 		//initially set the value of the element to the value in the state
-		element.innerHTML = this.state.getByPath(path).value
+		element.innerHTML = this.state.getByPath(path).value == undefined ? '' : this.state.getByPath(path).value
 	}
 
 
